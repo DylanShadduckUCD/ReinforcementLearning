@@ -37,15 +37,10 @@ q_estimates = zeros(2, k);
 % Avg reward
 r_avg = zeros(1, num_runs);
 
-% Incorperate our epsilon
-e = 0.1;
-
 for step=1:num_runs
     
     if step == 1
         % Need to make a random choice for the first run
-        choice = randi(k);
-    elseif rand(1) <= e
         choice = randi(k);
     else
         [~, choice] = max(q_estimates(1, :));
@@ -74,7 +69,3 @@ for step=1:num_runs
     r_avg(step) = reward_tot/step;
 end
 
-figure(1)
-plot(linspace(1,1000, 1000), r_avg)
-xlabel("Step")
-ylabel("Avg Reward")
