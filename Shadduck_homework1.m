@@ -58,7 +58,7 @@ plot(linspace(1,1000, 1000), r_avg_eg)
 plot(linspace(1,1000, 1000), r_avg_ucb)
 xlabel("Step")
 ylabel("Avg Reward")
-title("10-Armed Testbed Over 1000 steps (Avg for 2000 iterations)")
+title("10-Armed Testbed Over 1000 steps (Avg for 500 iterations)")
 legend("\epsilon-greedy \epsilon = 0.1", "UCB c = 2", "Location", "NorthWest")
 hold off
 
