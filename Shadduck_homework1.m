@@ -52,7 +52,7 @@ r_avg_ucb = r_tot_ucb/2000;
 
 %% Plotting
 
-% Test
+% Test2
 figure(1)
 hold on
 plot(linspace(1,1000, 1000), r_avg_eg)
