@@ -52,14 +52,13 @@ r_avg_ucb = r_tot_ucb/2000;
 
 %% Plotting
 
-% Test2
 figure(1)
 hold on
 plot(linspace(1,1000, 1000), r_avg_eg)
 plot(linspace(1,1000, 1000), r_avg_ucb)
 xlabel("Step")
 ylabel("Avg Reward")
-title("10-Armed Testbed Over 1000 steps (Avg for 500 iterations)")
+title("10-Armed Testbed Over 1000 steps (Avg for 2000 iterations)")
 legend("\epsilon-greedy \epsilon = 0.1", "UCB c = 2", "Location", "NorthWest")
 hold off
 
