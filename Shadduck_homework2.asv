@@ -19,30 +19,14 @@ starting_money = 5;
 maximum_money = 10;
 heads_prob = 0.9;
 
-%% All Policy State transition matrix
-agressive_vals_h = zeros(1,11);
-conservative_vals_h = zeros(1, 11);
-random_vals_h = zeros(1, 11);
+%% Agressive Policy State transition matrix
+agressive_vals = zeros(1,11);
+conservative_vals = zeros(1, 11);
 
 for i=1:11
     state = i-1;
-    agressive_vals_h(i) = agressive_policy(state, heads_prob);
-    conservative_vals_h(i) = conservative_policy(state, heads_prob, 0);
-    random_vals_h(i) = random_policy(state, heads_prob, 0);
-end
-
-% Now we set heads probability to 0.1
-heads_prob = 0.1;
-
-agressive_vals_t = zeros(1,11);
-conservative_vals_t = zeros(1, 11);
-random_vals_t = zeros(1, 11);
-
-for i=1:11
-    state = i-1;
-    agressive_vals_t(i) = agressive_policy(state, heads_prob);
-    conservative_vals_t(i) = conservative_policy(state, heads_prob, 0);
-    random_vals_t(i) = random_policy(state, heads_prob, 0);
+    agressive_vals(i) = agressive_policy(state, heads_prob);
+    conservative_vals(i) = conservative_policy(state, heads_prob, 0);
 end
 
 %% functions
@@ -122,20 +106,14 @@ function value = random_policy(state, heads_prob, depth)
         value = 0;
     elseif state >= 10
         value = 0;
-    elseif depth >= 11
+    elseif depth >= 25
         value = 0;
     else
         for a = 1:state
-            prob = 1/state;
-            if a == 1
+            if a == 1 && depth == 1
+                prob = 1/state;
                 value = prob*(heads_prob*(a + random_policy(state+a, ...
-                        heads_prob, depth)) + (1-heads_prob)*(-a + ...
-                        random_policy(state-a, heads_prob, depth)));
-            else
-                value = value + prob*(heads_prob*(a + random_policy(state+a, ...
-                        heads_prob, depth)) + (1-heads_prob)*(-a + ...
-                        random_policy(state-a, heads_prob, depth)));
-            end
+                        heads_prob, depth)) + (1-heads_))
         end
     end
 end
