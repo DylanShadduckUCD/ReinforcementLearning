@@ -20,10 +20,8 @@ clc
 % Probability of heads
 hp = 0.9;
 
-% There are 11 possible states representing how much money the player has
-% at the beginning of their turn
-states = linspace(0, 10, 11);
-V = zeros(1, 11);
+% Set a convergence threshold for our delta value
+convergence_threshold = 1e-4;
 
 % Initialize a random policy matrix
 P = zeros(1,9);
@@ -31,19 +29,23 @@ for s=1:9
     P(s) = randi(s);
 end
 
-% Define a delta for exiting the while loop for policy eval
-delta = 1;
-
 % Let's keep track of how many times we perform policy iteration
 k = 0;
 
 while true
-    % Increment k
-    k = k + 1;
     % This loop should only exit when our policy converges to the optimal
     % policy
     
-    while delta > 0.001
+    % Increment k
+    k = k + 1;
+    
+    % Initialize the policy evaluation matrix
+    V = zeros(1, 11);
+    
+    % Reset delta so we can enter the while loop again
+    delta = 1;
+    
+    while delta > convergence_threshold
         % Policy evaluation
         delta = 0;
         for s=1:9
@@ -60,9 +62,9 @@ while true
             delta = max([delta abs(v - V(s+1))]);
         end
     end
-    
+
     % We want to save the current state of our policy
-    pi = P;
+      pi = P;
     
     for s=1:9
         % Check each possible policy and see if it is better than our
@@ -83,6 +85,7 @@ while true
         end
         % Check if this new policy returns a greater value than
         % previous
+        
         [~, new_p] = max(temp);
         
         % If best policy is different than the current policy, update our
@@ -98,3 +101,45 @@ while true
 end
 
 fprintf("Policy converged to optimal policy after %d iterations\n", k)
+
+%% Value Iteration
+
+% Set the heads probability to 0.1
+hp = 0.1;
+
+% Initialize the value function and policy
+V = zeros(1, 11);
+P = zeros(1,9);
+
+% Initialize delta so we can enter our while loop
+delta = 1;
+
+while delta > convergence_threshold
+   % Set delta back to zero
+   delta = 0;
+   
+   % Check each possible action for each state
+   for s=1:9
+       v = V(s+1);
+       % We will store all the possible values in this temp variable
+       temp = zeros(1, s);
+       
+       for r=1:s
+           if r+s+1 >= 10
+               temp(r) = hp*(r + 0) + (1-hp)*(-r + V(s+1-r));
+           else
+               temp(r) = hp*(r + V(s+1+r)) + (1-hp)*(-r + V(s+1-r));
+           end
+       end
+       
+       % Find the maximum value and set that as our value for this
+       % state
+       [V(s+1), new_p] = max(temp);
+       
+       % Update policy
+       P(s) = new_p;
+       
+       % Update delta
+       delta = max([delta, abs(v-V(s+1))]);
+   end
+end
