@@ -25,13 +25,13 @@ num_runs = 1000;
 r_tot_eg = zeros(1, num_runs);
 r_tot_ucb = zeros(1, num_runs);
 
-% Calculating the 10-armed testbed 2000 times
+% Calculating the 10-armed testbed 500 times
 h = waitbar(0, "Training Models...");
 
-for trial = 1:2000
+for trial = 1:500
     
     % Update our progress bar
-    waitbar(trial/2000, h);
+    waitbar(trial/500, h);
     
     true_values = normrnd(mu, sigma, 1, k);
 
@@ -47,8 +47,8 @@ for trial = 1:2000
 end
 
 % Find average reward across all 2000 runs
-r_avg_eg = r_tot_eg/2000;
-r_avg_ucb = r_tot_ucb/2000;
+r_avg_eg = r_tot_eg/trial;
+r_avg_ucb = r_tot_ucb/trial;
 
 %% Plotting
 
@@ -58,7 +58,7 @@ plot(linspace(1,1000, 1000), r_avg_eg)
 plot(linspace(1,1000, 1000), r_avg_ucb)
 xlabel("Step")
 ylabel("Avg Reward")
-title("10-Armed Testbed Over 1000 steps (Avg for 2000 iterations)")
+title("10-Armed Testbed Over 1000 steps (Avg for 500 iterations)")
 legend("\epsilon-greedy \epsilon = 0.1", "UCB c = 2", "Location", "NorthWest")
 hold off
 
