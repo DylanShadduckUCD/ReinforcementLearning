@@ -100,7 +100,7 @@ while true
     end
 end
 
-fprintf("Policy converged to optimal policy after %d iterations\n", k)
+fprintf("Policy Iteration converged to optimal policy after %d iterations\n", k)
 
 %% Value Iteration
 
@@ -114,9 +114,15 @@ P = zeros(1,9);
 % Initialize delta so we can enter our while loop
 delta = 1;
 
+% Check number of iterations
+k = 0;
+
 while delta > convergence_threshold
    % Set delta back to zero
    delta = 0;
+   
+   % increment k
+   k = k + 1;
    
    % Check each possible action for each state
    for s=1:9
@@ -143,3 +149,4 @@ while delta > convergence_threshold
        delta = max([delta, abs(v-V(s+1))]);
    end
 end
+%fprintf("Value Iteration converged to optimal policy after %d iterations\n", k)
