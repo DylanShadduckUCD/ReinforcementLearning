@@ -28,7 +28,23 @@ P = round(rand(10, 10, 2));
 % We consider each face card as the same value (10)
 deck = repmat([11, linspace(2,9, 8), 10*ones(1,4)], [1,4]);
 
-while true
+% Initialize the Q matrix that has two values for each state action pair
+% Indicies are as follows
+% First is dealer showing
+% Second is user score
+% Third is if player has a useable ace
+% 4th is what action 2 for hit 1 for stick
+% 5th is if we are looking at Q value or number of times this action has
+% been taken
+Q = zeros(10,10,2,2,2);
+
+% Number of iterations
+num_iterations = 500000;
+
+for i=1:num_iterations
+    % Randomize policy at the beginning each time
+    P = round(rand(10, 10, 2));
+    
     % Assume deck is infinite, so we won't remove cards from the deck as we
     % take them out
     % Set a state by dealing cards to the dealer and the player
@@ -63,18 +79,116 @@ while true
         % Check score again
         [player_score, usable_ace] = check_score(player_hand);
         
+        if player_score > 21
+            break
+        end
+        
         % Check policy again
         policy = P(dealer_showing, player_score - 11, usable_ace);
     end
     
     % Now that the player has taken their turn, the dealer must play
     % (Assume the dealer must hit on soft 17)
+    [dealer_score, dealer_ace] = check_score(dealer_hand);
     
-    break
+    while dealer_score < 17
+        % Dealer hits unless their score is 17 or greater
+        dealer_hand = [dealer_hand, deck(randi([1,52], 1))];
+        
+        % Check for new score
+        [dealer_score, dealer_ace] = check_score(dealer_hand);
+    end
+    
+    % Check for winner
+    if player_score > dealer_score && player_score <= 21
+        % Neither bust and player wins
+        r = 1;
+    elseif player_score < dealer_score && dealer_score <= 21
+        % Neither bust and dealer wins
+        r = -1;
+    elseif player_score > 21 && dealer_score > 21
+        % Both bust
+        r = 0;
+    elseif player_score > 21 && dealer_score <= 21
+        % Player busts
+        r = -1;
+    elseif dealer_score > 21 && player_score <= 21
+        % Dealer busts
+        r = 1;
+    elseif dealer_score == player_score
+        % Score is tied
+        r = 0;
+    end
+    
+    % Update our Q function for each state that was played
+    for k=1:length(player_hand)
+        % update the hand with the new card
+        hand = player_hand(1:k);
+        
+        [score, ace] = check_score(hand);
+        if score >= 12 && score <= 21
+
+            p = P(dealer_showing, score - 11, ace) + 1;
+            qn = Q(dealer_showing, score - 11, ace, p, 1);
+            n = Q(dealer_showing, score - 11, ace, p, 2);
+
+            if n == 0
+                Q(dealer_showing, score - 11, ace, p, 1) = r;
+            else
+                Q(dealer_showing, score - 11, ace, p, 1) = qn + (1/n)*(r - qn);
+            end
+
+            % Update n
+            Q(dealer_showing, score - 11, ace, p, 2) = n + 1;
+
+            % Update our policy
+            q_hit = Q(dealer_showing, score - 11, ace, 2, 1);
+            q_stick = Q(dealer_showing, score - 11, ace, 1, 1);
+
+            if q_stick > q_hit
+                % Best policy is to stick
+                P(dealer_showing, score - 11, ace) = 0;
+            elseif q_stick < q_hit
+                % Best policy is to hit
+                P(dealer_showing, score - 11, ace) = 1;
+            end
+        end
+    end
 end
 
-test_hand = [2, 4, 9, 10];
-[score, ace] = check_score(test_hand);
+% Find optimal policy at the end of randomly searching
+for dealer_hand=1:10
+    for score = 1:10
+        for ace = 1:2
+            q_hit = Q(dealer_hand, score, ace, 2, 1);
+            q_stick = Q(dealer_hand, score, ace, 1, 1);
+            
+            if q_stick > q_hit
+                % Best policy is to stick
+                P(dealer_hand, score, ace) = 0;
+            elseif q_stick < q_hit
+                % Best policy is to hit
+                P(dealer_hand, score, ace) = 1;
+            end
+        end
+    end
+end
+
+%% Figures
+figure(1)
+pcolor(P(:,:,1)')
+yticks([1:10])
+yticklabels({'12','13','14','15','16','17','18','19','20','21'})
+title("Policy for no usable ace")
+
+figure(2)
+pcolor(P(:,:,2)')
+yticks([1:10])
+yticklabels({'12','13','14','15','16','17','18','19','20','21'})
+title("Policy for usable ace")
+
+figure(3)
+
 %% Functions
 
 function [score, usable_ace] = check_score(player_hand)
