@@ -39,11 +39,9 @@ deck = repmat([11, linspace(2,9, 8), 10*ones(1,4)], [1,4]);
 Q = zeros(10,10,2,2,2);
 
 % Number of iterations
-num_iterations = 500000;
+num_iterations = 5000000;
 
 for i=1:num_iterations
-    % Randomize policy at the beginning each time
-    P = round(rand(10, 10, 2));
     
     % Assume deck is infinite, so we won't remove cards from the deck as we
     % take them out
@@ -71,9 +69,12 @@ for i=1:num_iterations
         dealer_showing = 1;
     end
     
-    policy = P(dealer_showing, player_score - 11, usable_ace);
+    % Random policy to start. This is key for Monte Carlo ES
+    policy = round(rand(1));
+    rand_hand_len = length(player_hand);
+    rand_policy = policy;
     
-    while policy > 0 && player_score <= 21
+    while policy > 0 && player_score < 21
         player_hand = [player_hand, deck(randi([1,52], 1))];
         
         % Check score again
@@ -100,35 +101,37 @@ for i=1:num_iterations
     end
     
     % Check for winner
-    if player_score > dealer_score && player_score <= 21
-        % Neither bust and player wins
-        r = 1;
-    elseif player_score < dealer_score && dealer_score <= 21
-        % Neither bust and dealer wins
-        r = -1;
-    elseif player_score > 21 && dealer_score > 21
-        % Both bust
-        r = 0;
-    elseif player_score > 21 && dealer_score <= 21
+    if player_score > 21
         % Player busts
         r = -1;
-    elseif dealer_score > 21 && player_score <= 21
+    elseif dealer_score > 21
         % Dealer busts
         r = 1;
-    elseif dealer_score == player_score
-        % Score is tied
+    elseif player_score > dealer_score
+        % Neither bust and player wins
+        r = 1;
+    elseif player_score < dealer_score
+        % Neither bust and dealer wins
+        r = -1;
+    else
+        % It's a tie
         r = 0;
     end
     
     % Update our Q function for each state that was played
-    for k=1:length(player_hand)
+    for k=2:length(player_hand)
         % update the hand with the new card
         hand = player_hand(1:k);
         
         [score, ace] = check_score(hand);
         if score >= 12 && score <= 21
-
-            p = P(dealer_showing, score - 11, ace) + 1;
+            
+            if length(hand) == rand_hand_len
+                p = rand_policy + 1;
+            else
+                p = P(dealer_showing, score - 11, ace) + 1;
+            end
+            
             qn = Q(dealer_showing, score - 11, ace, p, 1);
             n = Q(dealer_showing, score - 11, ace, p, 2);
 
@@ -156,24 +159,6 @@ for i=1:num_iterations
     end
 end
 
-% Find optimal policy at the end of randomly searching
-for dealer_hand=1:10
-    for score = 1:10
-        for ace = 1:2
-            q_hit = Q(dealer_hand, score, ace, 2, 1);
-            q_stick = Q(dealer_hand, score, ace, 1, 1);
-            
-            if q_stick > q_hit
-                % Best policy is to stick
-                P(dealer_hand, score, ace) = 0;
-            elseif q_stick < q_hit
-                % Best policy is to hit
-                P(dealer_hand, score, ace) = 1;
-            end
-        end
-    end
-end
-
 %% Figures
 figure(1)
 pcolor(P(:,:,1)')
@@ -187,7 +172,6 @@ yticks([1:10])
 yticklabels({'12','13','14','15','16','17','18','19','20','21'})
 title("Policy for usable ace")
 
-figure(3)
 
 %% Functions
 
