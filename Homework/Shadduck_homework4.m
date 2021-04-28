@@ -164,15 +164,44 @@ figure(1)
 pcolor(P(:,:,1)')
 yticks([1:10])
 yticklabels({'12','13','14','15','16','17','18','19','20','21'})
-title("Policy for no usable ace")
+title("Optimal Policy: No Usable Ace")
+xticklabels({'A','2','3','4','5','6','7','8','9','10'})
+xlabel("Dealer Showing")
+ylabel("Player Sum")
 
 figure(2)
 pcolor(P(:,:,2)')
 yticks([1:10])
 yticklabels({'12','13','14','15','16','17','18','19','20','21'})
-title("Policy for usable ace")
+title("Optimal Policy: No Usable Ace")
+xlabel("Dealer Showing")
+xticklabels({'A','2','3','4','5','6','7','8','9','10'})
+ylabel("Player Sum")
 
+% Plot Q for ideal policy for each case
+V = zeros(10, 10, 2);
+for dealer_showing = 1:10
+    for score = 1:10
+        for ace = 1:2
+            p = P(dealer_showing, score, ace) + 1;
+            V(dealer_showing, score, ace) = Q(dealer_showing, score, ace, p, 1);
+        end
+    end
+end
 
+figure(3)
+surf(V(:,:,1))
+xticks([1:10])
+xticklabels({'12','13','14','15','16','17','18','19','20','21'})
+yticklabels({'A','2','3','4','5','6','7','8','9','10'})
+title("Optimal Policy Value: No Usable Ace")
+
+figure(4)
+surf(V(:,:,2))
+xticks([1:10])
+xticklabels({'12','13','14','15','16','17','18','19','20','21'})
+yticklabels({'A','2','3','4','5','6','7','8','9','10'})
+title("Optimal Policy Value: Usable Ace")
 %% Functions
 
 function [score, usable_ace] = check_score(player_hand)

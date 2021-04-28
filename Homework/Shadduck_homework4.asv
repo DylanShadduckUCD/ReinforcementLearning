@@ -39,7 +39,7 @@ deck = repmat([11, linspace(2,9, 8), 10*ones(1,4)], [1,4]);
 Q = zeros(10,10,2,2,2);
 
 % Number of iterations
-num_iterations = 500000;
+num_iterations = 5000000;
 
 for i=1:num_iterations
     
@@ -71,6 +71,8 @@ for i=1:num_iterations
     
     % Random policy to start. This is key for Monte Carlo ES
     policy = round(rand(1));
+    rand_hand_len = length(player_hand);
+    rand_policy = policy;
     
     while policy > 0 && player_score < 21
         player_hand = [player_hand, deck(randi([1,52], 1))];
@@ -123,8 +125,13 @@ for i=1:num_iterations
         
         [score, ace] = check_score(hand);
         if score >= 12 && score <= 21
-
-            p = P(dealer_showing, score - 11, ace) + 1;
+            
+            if length(hand) == rand_hand_len
+                p = rand_policy + 1;
+            else
+                p = P(dealer_showing, score - 11, ace) + 1;
+            end
+            
             qn = Q(dealer_showing, score - 11, ace, p, 1);
             n = Q(dealer_showing, score - 11, ace, p, 2);
 
@@ -157,16 +164,29 @@ figure(1)
 pcolor(P(:,:,1)')
 yticks([1:10])
 yticklabels({'12','13','14','15','16','17','18','19','20','21'})
-title("Policy for no usable ace")
+title("Optimal Policy: No Usable Ace")
 
 figure(2)
 pcolor(P(:,:,2)')
 yticks([1:10])
 yticklabels({'12','13','14','15','16','17','18','19','20','21'})
-title("Policy for usable ace")
+title("Optimal Policy: No Usable Ace")
+
+% Plot Q for ideal policy for each case
+V = zeros(10, 10, 2);
+for dealer_showing = 1:10
+    for score = 1:10
+        for ace = 1:2
+            p = P(dealer_showing, score, ace) + 1;
+            V(dealer_showing, score, ace) = Q(dealer_showing, score, ace, p, 1);
+        end
+    end
+end
 
 figure(3)
-
+surf(V(:,:,1))
+xticks([1:10])
+xticklabels({'12','13','14','15','16','17','18','19','20','21'})
 %% Functions
 
 function [score, usable_ace] = check_score(player_hand)
