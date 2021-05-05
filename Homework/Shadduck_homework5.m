@@ -314,7 +314,7 @@ hold on
 plot(linspace(1, episodes, episodes), movmean(avg_rewards, 10))
 plot(linspace(1, episodes, episodes), movmean(avg_rewards_q, 10))
 plot(linspace(1, episodes, episodes), movmean(avg_rewards_es, 10))
-title("SARSA Sum of rewards per episode")
+title("Example 6.6")
 xlabel("Episode")
 ylabel("Sum of rewards")
 legend("SARSA", "Q-Learning", "Expected SARSA", "Location", "SouthEast")
