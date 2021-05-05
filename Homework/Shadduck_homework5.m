@@ -115,11 +115,6 @@ for trial=1:trials
                 a_prime = get_action(Q, s_prime, epsilon, false);
             end
 
-            % Update our Q function
-            q = Q(s(1), s(2), a);
-            q_prime = Q(s_prime(1), s_prime(2), a_prime);
-            Q(s(1), s(2), a) = q + alpha * (r + q_prime - q);
-
             % Check for break condition
             if s_prime(1) == 4 && s_prime(2) == 12
                 % Update our Q function for the terminal state
@@ -143,14 +138,255 @@ end
 
 % Average our avg rewards
 avg_rewards = avg_rewards./trials;
+
+%% Q-Learning Method
+
+% 4 actions for up, down, left, and right
+num_actions = 4;          
+
+% Starting position in terms of rows and columns
+start_position = [4, 1];
+
+% Avg the sum of rewards per episode over several trials
+avg_rewards_q = zeros(1, episodes);
+
+for trial=1:trials
+    % Keep track of rewards during the episodes
+    sum_reward_per_episode = [];
+    
+    % Up = A1, Down = A2, Left = A3, Right = A4
+    Q = zeros(cols, rows, num_actions);
+    
+    for episode=1:episodes
+        
+        % Keep track of rewards received for this episode
+        episode_rewards = 0;
+
+        % s represents the row and column of the starting position
+        s = start_position;
+
+        % First thing to do is take a step in a particular direction
+        a = get_action(Q, s, epsilon, false);
+
+        % Update s to find the reward for taking this action
+        s_prime = new_state(s, a);
+
+        % Now that we have taken an action, we claim our reward
+        r = gridworld(s_prime(1), s_prime(2));
+        episode_rewards = episode_rewards + r;
+
+        % Update our Q function
+        q = Q(s(1), s(2), a);
+        q_prime = max_q(Q, s_prime);
+        Q(s(1), s(2), a) = q + alpha * (r + q_prime - q);
+
+        % Now we play this episode until we reach the terminal state
+        while true
+            % Old state and action are the set to the current state and action
+            % Unless we fall off the cliff
+            if r == -100
+                s = start_position;
+            else
+                s = s_prime;
+            end
+            
+            % Find the next action
+            a = get_action(Q, s, epsilon, false);
+
+            % Find new s prime from the current state action pair
+            s_prime = new_state(s, a);
+
+            % Find the corresponding reward for this action
+            r = gridworld(s_prime(1), s_prime(2));
+            episode_rewards = episode_rewards + r;
+
+            % Check for break condition
+            if s_prime(1) == 4 && s_prime(2) == 12
+                % Update our Q function for the terminal state
+                q = Q(s(1), s(2), a);
+                q_prime = 0;
+                Q(s(1), s(2), a) = q + alpha * (r + q_prime - q);
+                break
+            else
+                % Update our Q function for non terminal state
+                q = Q(s(1), s(2), a);
+                q_prime = max_q(Q, s_prime);
+                Q(s(1), s(2), a) = q + alpha * (r + q_prime - q);
+            end
+        end
+
+        % Update our avg episode rewards
+        sum_reward_per_episode = [sum_reward_per_episode, episode_rewards];
+    end
+    avg_rewards_q = avg_rewards_q + sum_reward_per_episode;
+end
+
+% Average our avg rewards
+avg_rewards_q = avg_rewards_q./trials;
+
+%% Expected SARSA
+
+% 4 actions for up, down, left, and right
+num_actions = 4;          
+
+% Starting position in terms of rows and columns
+start_position = [4, 1];
+
+% Avg the sum of rewards per episode over several trials
+avg_rewards_es = zeros(1, episodes);
+
+for trial=1:trials
+    % Keep track of rewards during the episodes
+    sum_reward_per_episode = [];
+    
+    % Up = A1, Down = A2, Left = A3, Right = A4
+    Q = zeros(cols, rows, num_actions);
+    
+    for episode=1:episodes
+        
+        % Keep track of rewards received for this episode
+        episode_rewards = 0;
+
+        % s represents the row and column of the starting position
+        s = start_position;
+
+        % First thing to do is take a step in a particular direction
+        a = get_action(Q, s, epsilon, false);
+
+        % Update s to find the reward for taking this action
+        s_prime = new_state(s, a);
+
+        % Now that we have taken an action, we claim our reward
+        r = gridworld(s_prime(1), s_prime(2));
+        episode_rewards = episode_rewards + r;
+
+        % Update our Q function
+        q = Q(s(1), s(2), a);
+        q_prime = expected_q(Q, s_prime, epsilon);
+        Q(s(1), s(2), a) = q + alpha * (r + q_prime - q);
+
+        % Now we play this episode until we reach the terminal state
+        while true
+            % Old state and action are the set to the current state and action
+            % Unless we fall off the cliff
+            if r == -100
+                s = start_position;
+            else
+                s = s_prime;
+            end
+            
+            % Find the next action
+            a = get_action(Q, s, epsilon, false);
+
+            % Find new s prime from the current state action pair
+            s_prime = new_state(s, a);
+
+            % Find the corresponding reward for this action
+            r = gridworld(s_prime(1), s_prime(2));
+            episode_rewards = episode_rewards + r;
+
+            % Check for break condition
+            if s_prime(1) == 4 && s_prime(2) == 12
+                % Update our Q function for the terminal state
+                q = Q(s(1), s(2), a);
+                q_prime = 0;
+                Q(s(1), s(2), a) = q + alpha * (r + q_prime - q);
+                break
+            else
+                % Update our Q function for non terminal state
+                q = Q(s(1), s(2), a);
+                q_prime = expected_q(Q, s_prime, epsilon);
+                Q(s(1), s(2), a) = q + alpha * (r + q_prime - q);
+            end
+        end
+
+        % Update our avg episode rewards
+        sum_reward_per_episode = [sum_reward_per_episode, episode_rewards];
+    end
+    avg_rewards_es = avg_rewards_es + sum_reward_per_episode;
+end
+
+% Average our avg rewards
+avg_rewards_es = avg_rewards_es./trials;
 %% Plotting
 figure(1)
-plot(linspace(1, episodes, episodes), medfilt1(avg_rewards, 10))
+hold on
+plot(linspace(1, episodes, episodes), movmean(avg_rewards, 10))
+plot(linspace(1, episodes, episodes), movmean(avg_rewards_q, 10))
+plot(linspace(1, episodes, episodes), movmean(avg_rewards_es, 10))
 title("SARSA Sum of rewards per episode")
 xlabel("Episode")
 ylabel("Sum of rewards")
+legend("SARSA", "Q-Learning", "Expected SARSA", "Location", "SouthEast")
 ylim([-100, -15])
+hold off
 %% Functions
+function q_val = expected_q(Q_function, state, epsilon)
+    % This function returns the q value for the expected SARSA method to
+    % update our q function. This q value is determined by the expected
+    % value of all possible action state combinations for the next step
+    
+    col = state(2);
+    row = state(1);
+    
+    Q = Q_function(row, col, :);
+    
+    if col + 1 > 12
+        % Make sure we can't go right
+        Q(4) = -inf;
+    end
+    if col - 1 < 1
+        % Make sure we can't go left
+        Q(3) = -inf;
+    end
+    if row + 1 > 4
+        % Make sure we can't go down
+        Q(2) = -inf;
+    end
+    if row - 1 < 1
+        % Make sure we can't go up
+        Q(1) = -inf;
+    end
+    
+    [max_q, index] = max(Q);
+    
+    % Remove the max q from the q val
+    Q(index) = 0;
+    other_q = sum(Q(Q~=-inf))./(length(Q(Q~=-inf)) - 1);
+    
+    % Expected val is the probability of choosing max q times max q plus
+    % the probability of choosing the other actions times that value
+    q_val = (1-epsilon)*max_q + epsilon*other_q;
+end
+
+function q_val = max_q(Q_function, state)
+    % This function returns the max q value for a certain state and ensures
+    % that only appropriate states have been chosen.
+    col = state(2);
+    row = state(1);
+    
+    Q = Q_function(row, col, :);
+    
+    if col + 1 > 12
+        % Make sure we can't go right
+        Q(4) = -inf;
+    end
+    if col - 1 < 1
+        % Make sure we can't go left
+        Q(3) = -inf;
+    end
+    if row + 1 > 4
+        % Make sure we can't go down
+        Q(2) = -inf;
+    end
+    if row - 1 < 1
+        % Make sure we can't go up
+        Q(1) = -inf;
+    end
+    
+    q_val = max(Q);
+end
+    
 function state_prime = new_state(state, action)
     % This function takes a current state and a given action and returns a
     % vector representing the new state given that action
